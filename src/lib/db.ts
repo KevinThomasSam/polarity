@@ -2,6 +2,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { readdir, readFile } from "fs/promises";
 import path from "path";
+import { env } from "@/lib/env";
 
 const dataPath = path.join(process.cwd(), ".polarity-data");
 const migrationPath = path.join(process.cwd(), "migrations");
@@ -40,7 +41,7 @@ export async function runMigrations(client: PGlite) {
 }
 
 async function seedDevelopmentData(client: PGlite) {
-  if (process.env.NODE_ENV === "production") return;
+  if (env.NODE_ENV === "production") return;
   const count = await client.query<{ count: string }>("SELECT count(*)::text AS count FROM users");
   if (count.rows[0].count !== "0") return;
   const password = hashPassword("welcome123");
