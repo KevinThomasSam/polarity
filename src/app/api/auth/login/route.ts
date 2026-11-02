@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { checkPassword, db, id } from "@/lib/db";
+const schema=z.object({username:z.string().min(1),password:z.string().min(1)});
+export async function POST(request:Request){const parsed=schema.safeParse(await request.json());if(!parsed.success)return NextResponse.json({error:"Invalid credentials."},{status:400});const result=await(await db()).query<{id:string;username:string;display_name:string;password_hash:string}>("SELECT id,username,display_name,password_hash FROM users WHERE username=$1",[parsed.data.username.toLowerCase()]);const user=result.rows[0];if(!user||!checkPassword(parsed.data.password,user.password_hash))return NextResponse.json({error:"Invalid credentials."},{status:401});const session=id();await(await db()).query("INSERT INTO sessions(id,user_id) VALUES($1,$2)",[session,user.id]);const response=NextResponse.json({user});response.cookies.set("polarity_session",session,{httpOnly:true,sameSite:"lax",path:"/",maxAge:60*60*24*30});return response}

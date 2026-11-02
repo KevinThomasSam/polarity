@@ -1,0 +1,4 @@
+"use client";
+import { useEffect, useState } from "react";
+type Notice={id:string;body:string;type:string;created_at:string;read_at:string|null};
+export default function Notifications(){const[items,setItems]=useState<Notice[]>([]),[error,setError]=useState("");const load=async()=>{const r=await fetch("/api/notifications");const d=await r.json();if(r.ok)setItems(d.notifications);else setError(d.error)};useEffect(()=>{load()},[]);const read=async()=>{await fetch("/api/notifications",{method:"PATCH"});load()};return <main className="resource-page"><a href="/">← Back to Polarity</a><span className="kicker">NOTIFICATIONS</span><h1>Your activity.</h1><button className="page-button" onClick={read}>Mark all read</button>{error&&<p>{error}</p>}<section className="resource-list">{items.map(n=><article key={n.id}><b>{n.type}</b><p>{n.body}</p><small>{n.read_at?"Read":"Unread"}</small></article>)}{!items.length&&!error&&<p>You’re all caught up.</p>}</section></main>}

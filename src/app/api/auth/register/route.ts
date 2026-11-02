@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { db, hashPassword, id } from "@/lib/db";
+const schema=z.object({username:z.string().regex(/^[a-z0-9_]{3,24}$/),displayName:z.string().min(2).max(50),password:z.string().min(8).max(128)});
+export async function POST(request:Request){const parsed=schema.safeParse(await request.json());if(!parsed.success)return NextResponse.json({error:"Use a 3–24 character username and an 8+ character password."},{status:400});try{const userId=id(),session=id();await (await db()).query("INSERT INTO users(id,username,display_name,password_hash) VALUES($1,$2,$3,$4)",[userId,parsed.data.username,parsed.data.displayName,hashPassword(parsed.data.password)]);await (await db()).query("INSERT INTO sessions(id,user_id) VALUES($1,$2)",[session,userId]);const response=NextResponse.json({user:{id:userId,username:parsed.data.username,display_name:parsed.data.displayName}});response.cookies.set("polarity_session",session,{httpOnly:true,sameSite:"lax",path:"/",maxAge:60*60*24*30});return response}catch{return NextResponse.json({error:"That username is already taken."},{status:409})}}

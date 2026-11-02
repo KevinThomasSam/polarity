@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { cookies } from "next/headers"; import { db } from "@/lib/db";
+export async function POST(){const store=await cookies();const token=store.get("polarity_session")?.value;if(token)await(await db()).query("DELETE FROM sessions WHERE id=$1",[token]);const response=NextResponse.json({ok:true});response.cookies.delete("polarity_session");return response;}
